@@ -5,6 +5,8 @@ import (
 	"io"
 
 	"github.com/pkg/errors"
+
+	"github.com/heucuva/goaudiofile/internal/util"
 )
 
 // SCRSFlags is a bitset for the S3M instrument/sample header definition
@@ -68,6 +70,11 @@ type SCRSHeader struct {
 	Filename [12]byte
 }
 
+// GetFilename returns a string representation of the data stored in the Filename field
+func (h *SCRSHeader) GetFilename() string {
+	return util.GetString(h.Filename[:])
+}
+
 // SCRSAncillaryHeader is the generic interface of the Type-specific header
 type SCRSAncillaryHeader interface{}
 
@@ -98,6 +105,11 @@ type SCRSDigiplayerHeader struct {
 	Reserved2C    [4]byte
 	SampleName    [28]byte
 	SCRS          [4]uint8
+}
+
+// GetSampleName returns a string representation of the data stored in the SampleName field
+func (h *SCRSDigiplayerHeader) GetSampleName() string {
+	return util.GetString(h.SampleName[:])
 }
 
 // OPL2ModulatorA is a bit-field of Adlib/OPL2 modulators
@@ -233,6 +245,11 @@ type SCRSAdlibHeader struct {
 	SCRI          [4]uint8
 }
 
+// GetSampleName returns a string representation of the data stored in the SampleName field
+func (h *SCRSAdlibHeader) GetSampleName() string {
+	return util.GetString(h.SampleName[:])
+}
+
 // SCRSNoneHeader is the remaining header for S3M none-type instrument
 type SCRSNoneHeader struct {
 	Reserved0D [19]byte
@@ -242,6 +259,11 @@ type SCRSNoneHeader struct {
 	Reserved24 [12]byte
 	SampleName [28]byte
 	Reserved4C [4]uint8
+}
+
+// GetSampleName returns a string representation of the data stored in the SampleName field
+func (h *SCRSNoneHeader) GetSampleName() string {
+	return util.GetString(h.SampleName[:])
 }
 
 // SCRS is a full header for an S3M instrument

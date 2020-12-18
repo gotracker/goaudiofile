@@ -3,6 +3,8 @@ package s3m
 import (
 	"encoding/binary"
 	"io"
+
+	"github.com/heucuva/goaudiofile/internal/util"
 )
 
 // ModuleHeader is the initial header definition of an S3M file
@@ -26,6 +28,11 @@ type ModuleHeader struct {
 	DefaultPanValueFlag   uint8
 	Reserved34            [8]byte
 	Special               ParaPointer16
+}
+
+// GetName returns a string representation of the data stored in the Name field
+func (mh *ModuleHeader) GetName() string {
+	return util.GetString(mh.Name[:])
 }
 
 // ReadModuleHeader reads a ModuleHeader from the input stream

@@ -8,11 +8,11 @@ import (
 	"github.com/heucuva/goaudiofile/internal/util"
 )
 
-// File is an S3M internal file representation
+// File is an MOD internal file representation
 type File struct {
-	Head        ModuleHeader
-	Patterns    []Pattern
-	Instruments []SampleData
+	Head     ModuleHeader
+	Patterns []Pattern
+	Samples  []SampleData
 }
 
 type formatIntf interface {
@@ -105,13 +105,13 @@ func Read(r io.Reader) (*File, error) {
 		f.Patterns[i] = *pattern
 	}
 
-	f.Instruments = make([]SampleData, len(f.Head.Samples))
-	for instNum, inst := range f.Head.Samples {
+	f.Samples = make([]SampleData, len(f.Head.Instrument))
+	for instNum, inst := range f.Head.Instrument {
 		samp := make([]byte, inst.Len.Value())
 		if err := binary.Read(r, binary.LittleEndian, &samp); err != nil {
 			return nil, err
 		}
-		f.Instruments[instNum] = samp
+		f.Samples[instNum] = samp
 	}
 
 	return &f, nil

@@ -1,3 +1,5 @@
+// amiga noisetracker / protracker
+
 package mod
 
 import (
@@ -33,4 +35,9 @@ func (f *fmtPT) readPattern(ffmt *modFormatDetails, r io.Reader) (*Pattern, erro
 
 func (f *fmtPT) rectifyOrderList(ffmt *modFormatDetails, in [128]uint8) ([128]uint8, error) {
 	return in, nil
+}
+
+func init() {
+	signatureLookup["M.K."] = modFormatDetails{4, protracker}
+	signatureLookup["M!K!"] = modFormatDetails{4, protracker}
 }

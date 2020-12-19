@@ -1,3 +1,5 @@
+// startrekker / star tracker
+
 package mod
 
 import (
@@ -51,4 +53,10 @@ func (f *fmtST) rectifyOrderList(ffmt *modFormatDetails, in [128]uint8) ([128]ui
 		return out, nil
 	}
 	return in, nil
+}
+
+func init() {
+	// fasttracker
+	signatureLookup["FLT4"] = modFormatDetails{4, startrekker}
+	signatureLookup["FLT8"] = modFormatDetails{8, startrekker}
 }

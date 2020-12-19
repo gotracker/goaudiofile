@@ -21,34 +21,12 @@ type formatIntf interface {
 }
 
 type modFormatDetails struct {
-	sig      string
 	channels int
 	format   formatIntf
 }
 
 var (
-	sigChannels = [...]modFormatDetails{
-		// amiga noisetracker / protracker
-		{"M.K.", 4, protracker}, {"M!K!", 4, protracker},
-		// startracker (startrekker?)
-		{"FLT4", 4, startrekker}, {"FLT8", 8, startrekker},
-		// fasttracker
-		{"2CHN", 2, fasttracker}, {"4CHN", 4, fasttracker},
-		{"6CHN", 6, fasttracker}, {"8CHN", 8, fasttracker},
-		// fasttracker 2
-		{"10CH", 10, fasttracker}, {"11CH", 11, fasttracker},
-		{"12CH", 12, fasttracker}, {"13CH", 13, fasttracker},
-		{"14CH", 14, fasttracker}, {"15CH", 15, fasttracker},
-		{"16CH", 16, fasttracker}, {"17CH", 17, fasttracker},
-		{"18CH", 18, fasttracker}, {"19CH", 19, fasttracker},
-		{"20CH", 20, fasttracker}, {"21CH", 21, fasttracker},
-		{"22CH", 22, fasttracker}, {"23CH", 23, fasttracker},
-		{"24CH", 24, fasttracker}, {"25CH", 25, fasttracker},
-		{"26CH", 26, fasttracker}, {"27CH", 27, fasttracker},
-		{"28CH", 28, fasttracker}, {"29CH", 29, fasttracker},
-		{"30CH", 30, fasttracker}, {"31CH", 31, fasttracker},
-		{"32CH", 32, fasttracker},
-	}
+	signatureLookup = make(map[string]modFormatDetails)
 )
 
 // Read reads a MOD file from the reader `r` and creates an internal MOD File representation
@@ -61,11 +39,9 @@ func Read(r io.Reader) (*File, error) {
 
 	sig := util.GetString(f.Head.Sig[:])
 	var ffmt *modFormatDetails
-	for _, s := range sigChannels {
-		if s.sig == sig {
-			ffmt = &s
-			break
-		}
+	s, ok := signatureLookup[sig]
+	if ok {
+		ffmt = &s
 	}
 
 	if ffmt == nil || ffmt.channels == 0 {

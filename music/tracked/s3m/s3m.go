@@ -86,6 +86,12 @@ func Read(r io.Reader) (*File, error) {
 			return nil, err
 		}
 		if pattern == nil {
+			// empty pattern
+			p := PackedPattern{
+				Length: 66, // 2 bytes for length and 64 zeroes of data
+				Data:   make([]byte, 64),
+			}
+			f.Patterns = append(f.Patterns, p)
 			continue
 		}
 		f.Patterns = append(f.Patterns, *pattern)
@@ -132,6 +138,9 @@ func readS3MSample(data []byte, ptr ParaPointer) (*SCRSFull, error) {
 
 func readS3MPattern(data []byte, ptr ParaPointer) (*PackedPattern, error) {
 	pos := ptr.Offset()
+	if pos <= 0 {
+		return nil, nil // no pattern (empty)
+	}
 	if pos >= len(data) {
 		return nil, errors.New("data out of range")
 	}

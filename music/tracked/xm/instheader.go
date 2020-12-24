@@ -106,7 +106,7 @@ const (
 	// SampleFlag16Bit designates that the sample is 16-bit
 	SampleFlag16Bit = SampleFlags(0x10)
 	// SampleFlagStereo designates that the sample is stereo
-	SampleFlagStereo = EnvelopeFlags(0x20)
+	SampleFlagStereo = SampleFlags(0x20)
 )
 
 // LoopMode returns the loop mode described by the sample flags
@@ -120,7 +120,7 @@ func (f SampleFlags) Is16Bit() bool {
 }
 
 // IsStereo returns true if the sample is stereo
-func (f EnvelopeFlags) IsStereo() bool {
+func (f SampleFlags) IsStereo() bool {
 	return (f & SampleFlagStereo) != 0
 }
 

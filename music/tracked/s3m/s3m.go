@@ -6,7 +6,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/heucuva/goaudiofile/internal/util"
+	"github.com/gotracker/goaudiofile/internal/util"
 )
 
 // File is an S3M internal file representation

@@ -1,6 +1,6 @@
 package s3m
 
-import "github.com/heucuva/goaudiofile/internal/util"
+import "github.com/gotracker/goaudiofile/internal/util"
 
 // SCRSFlags is a bitset for the S3M instrument/sample header definition
 type SCRSFlags uint8

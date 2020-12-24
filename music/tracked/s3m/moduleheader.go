@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"io"
 
-	"github.com/heucuva/goaudiofile/internal/util"
+	"github.com/gotracker/goaudiofile/internal/util"
 )
 
 // ModuleHeader is the initial header definition of an S3M file

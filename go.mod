@@ -1,4 +1,4 @@
-module github.com/heucuva/goaudiofile
+module github.com/gotracker/goaudiofile
 
 go 1.15
 

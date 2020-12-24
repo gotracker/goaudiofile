@@ -1,6 +1,6 @@
 package mod
 
-import "github.com/heucuva/goaudiofile/internal/util"
+import "github.com/gotracker/goaudiofile/internal/util"
 
 // InstrumentHeader is a representation of the MOD file instrument header
 type InstrumentHeader struct {

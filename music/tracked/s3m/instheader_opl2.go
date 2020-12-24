@@ -3,7 +3,7 @@ package s3m
 import (
 	"math"
 
-	"github.com/heucuva/goaudiofile/internal/util"
+	"github.com/gotracker/goaudiofile/internal/util"
 )
 
 // OPL2Multiple is the YM3812/YMF262 Frequency Data Multiplier / MULT (MULTIPLE) value

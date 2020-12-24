@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/heucuva/goaudiofile/internal/util"
+	"github.com/gotracker/goaudiofile/internal/util"
 )
 
 // HiLo32 is a 32 bit value where the first and second 16 bits are stored separately

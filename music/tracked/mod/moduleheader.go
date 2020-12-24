@@ -1,11 +1,11 @@
 package mod
 
-import "github.com/heucuva/goaudiofile/internal/util"
+import "github.com/gotracker/goaudiofile/internal/util"
 
 // ModuleHeader is a representation of the MOD file header
 type ModuleHeader struct {
 	Name       [20]byte
-	Instrument    [31]InstrumentHeader
+	Instrument [31]InstrumentHeader
 	SongLen    uint8
 	RestartPos uint8
 	Order      [128]uint8

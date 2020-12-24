@@ -15,11 +15,6 @@ type File struct {
 
 // Read reads an XM file from the reader `r` and creates an internal File representation
 func Read(r io.Reader) (*File, error) {
-	buffer := &bytes.Buffer{}
-	if _, err := buffer.ReadFrom(r); err != nil {
-		return nil, err
-	}
-
 	xmh, err := readHeader(r)
 	if err != nil {
 		return nil, err

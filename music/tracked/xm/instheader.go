@@ -89,7 +89,7 @@ type SampleHeader struct {
 	RelativeNoteNumber int8
 	ReservedP17        uint8
 	Name               [22]uint8
-	SampleData         []int8
+	SampleData         []uint8
 }
 
 // GetName returns a string representation of the data stored in the Name field
@@ -161,7 +161,9 @@ func readInstrumentHeaderPartial(r io.Reader) (*InstrumentHeader, error) {
 	if err := binary.Read(r, binary.LittleEndian, &ih.SamplesCount); err != nil {
 		return nil, err
 	}
-	sz += 2
+	if sz += 2; sz >= ih.Size {
+		return &ih, nil
+	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.SampleHeaderSize); err != nil {
 		return nil, err
@@ -332,6 +334,10 @@ func readInstrumentHeader(r io.Reader) (*InstrumentHeader, error) {
 		return nil, err
 	}
 
+	if ih.Size < 29 {
+		panic("what")
+	}
+
 	for i := uint16(0); i < ih.SamplesCount; i++ {
 		s := SampleHeader{}
 
@@ -375,26 +381,25 @@ func readInstrumentHeader(r io.Reader) (*InstrumentHeader, error) {
 			return nil, err
 		}
 
-		s.SampleData = make([]int8, int(s.Length))
+		s.SampleData = make([]uint8, int(s.Length))
 
 		ih.Samples = append(ih.Samples, s)
 	}
 
 	for _, s := range ih.Samples {
-		data := s.SampleData
-		if err := binary.Read(r, binary.LittleEndian, &data); err != nil {
+		if err := binary.Read(r, binary.LittleEndian, &s.SampleData); err != nil {
 			return nil, err
 		}
 
 		// convert the sample in the background
-		go func(data []int8) {
+		go func(data []uint8) {
 			old := int8(0)
 			for i, s := range data {
-				new := s + old
-				data[i] = new
+				new := int8(s) + old
+				data[i] = uint8(new)
 				old = new
 			}
-		}(data)
+		}(s.SampleData)
 	}
 	return ih, nil
 }

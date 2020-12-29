@@ -114,15 +114,22 @@ type PatternFileFormat struct {
 	PackedData []byte
 }
 
-func readPatternHeader(r io.Reader, fileVersion uint16) (*PatternHeader, error) {
+func readPatternHeaderPartial(r io.Reader, fileVersion uint16) (*PatternHeader, error) {
 	ph := PatternHeader{}
 
+	sz := uint32(0)
 	if err := binary.Read(r, binary.LittleEndian, &ph.PatternHeaderLength); err != nil {
 		return nil, err
+	}
+	if sz += 4; sz >= ph.PatternHeaderLength {
+		return &ph, nil
 	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ph.PackingType); err != nil {
 		return nil, err
+	}
+	if sz++; sz >= ph.PatternHeaderLength {
+		return &ph, nil
 	}
 
 	if fileVersion == 0x0102 {
@@ -132,13 +139,32 @@ func readPatternHeader(r io.Reader, fileVersion uint16) (*PatternHeader, error) 
 		}
 
 		ph.NumRows = uint16(rowCount) + 1
+		if sz++; sz >= ph.PatternHeaderLength {
+			return &ph, nil
+		}
+
 	} else {
 		if err := binary.Read(r, binary.LittleEndian, &ph.NumRows); err != nil {
 			return nil, err
 		}
+		if sz += 2; sz >= ph.PatternHeaderLength {
+			return &ph, nil
+		}
 	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ph.PackedPatternDataSize); err != nil {
+		return nil, err
+	}
+	if sz += 2; sz >= ph.PatternHeaderLength {
+		return &ph, nil
+	}
+
+	return &ph, nil
+}
+
+func readPatternHeader(r io.Reader, fileVersion uint16) (*PatternHeader, error) {
+	ph, err := readPatternHeaderPartial(r, fileVersion)
+	if err != nil {
 		return nil, err
 	}
 
@@ -154,5 +180,5 @@ func readPatternHeader(r io.Reader, fileVersion uint16) (*PatternHeader, error) 
 		return nil, errors.New("pattern row count out of range - possibly corrupt file")
 	}
 
-	return &ph, nil
+	return ph, nil
 }

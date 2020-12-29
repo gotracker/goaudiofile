@@ -142,105 +142,185 @@ const (
 func readInstrumentHeaderPartial(r io.Reader) (*InstrumentHeader, error) {
 	ih := InstrumentHeader{}
 
+	sz := uint32(0)
 	if err := binary.Read(r, binary.LittleEndian, &ih.Size); err != nil {
 		return nil, err
 	}
+	sz += 4
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.Name); err != nil {
 		return nil, err
 	}
+	sz += 22
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.Type); err != nil {
 		return nil, err
 	}
+	sz++
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.SamplesCount); err != nil {
 		return nil, err
 	}
-
-	if ih.SamplesCount == 0 {
-		// it's empty - we're done!
-		return &ih, nil
-	}
+	sz += 2
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.SampleHeaderSize); err != nil {
 		return nil, err
 	}
-
-	if err := binary.Read(r, binary.LittleEndian, &ih.SampleNumber); err != nil {
-		return nil, err
+	if sz += 4; sz >= ih.Size {
+		return &ih, nil
 	}
 
-	if err := binary.Read(r, binary.LittleEndian, &ih.VolEnv); err != nil {
-		return nil, err
+	for i := range ih.SampleNumber {
+		if err := binary.Read(r, binary.LittleEndian, &ih.SampleNumber[i]); err != nil {
+			return nil, err
+		}
+		if sz++; sz >= ih.Size {
+			return &ih, nil
+		}
 	}
 
-	if err := binary.Read(r, binary.LittleEndian, &ih.PanEnv); err != nil {
-		return nil, err
+	for i := range ih.VolEnv {
+		if err := binary.Read(r, binary.LittleEndian, &ih.VolEnv[i].X); err != nil {
+			return nil, err
+		}
+		if sz += 2; sz >= ih.Size {
+			return &ih, nil
+		}
+		if err := binary.Read(r, binary.LittleEndian, &ih.VolEnv[i].Y); err != nil {
+			return nil, err
+		}
+		if sz += 2; sz >= ih.Size {
+			return &ih, nil
+		}
+	}
+
+	for i := range ih.PanEnv {
+		if err := binary.Read(r, binary.LittleEndian, &ih.PanEnv[i].X); err != nil {
+			return nil, err
+		}
+		if sz += 2; sz >= ih.Size {
+			return &ih, nil
+		}
+		if err := binary.Read(r, binary.LittleEndian, &ih.PanEnv[i].Y); err != nil {
+			return nil, err
+		}
+		if sz += 2; sz >= ih.Size {
+			return &ih, nil
+		}
 	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.VolPoints); err != nil {
 		return nil, err
 	}
+	if sz++; sz >= ih.Size {
+		return &ih, nil
+	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.PanPoints); err != nil {
 		return nil, err
+	}
+	if sz++; sz >= ih.Size {
+		return &ih, nil
 	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.VolSustainPoint); err != nil {
 		return nil, err
 	}
+	if sz++; sz >= ih.Size {
+		return &ih, nil
+	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.VolLoopStartPoint); err != nil {
 		return nil, err
+	}
+	if sz++; sz >= ih.Size {
+		return &ih, nil
 	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.VolLoopEndPoint); err != nil {
 		return nil, err
 	}
+	if sz++; sz >= ih.Size {
+		return &ih, nil
+	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.PanSustainPoint); err != nil {
 		return nil, err
+	}
+	if sz++; sz >= ih.Size {
+		return &ih, nil
 	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.PanLoopStartPoint); err != nil {
 		return nil, err
 	}
+	if sz++; sz >= ih.Size {
+		return &ih, nil
+	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.PanLoopEndPoint); err != nil {
 		return nil, err
+	}
+	if sz++; sz >= ih.Size {
+		return &ih, nil
 	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.VolFlags); err != nil {
 		return nil, err
 	}
+	if sz++; sz >= ih.Size {
+		return &ih, nil
+	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.PanFlags); err != nil {
 		return nil, err
+	}
+	if sz++; sz >= ih.Size {
+		return &ih, nil
 	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.VibratoType); err != nil {
 		return nil, err
 	}
+	if sz++; sz >= ih.Size {
+		return &ih, nil
+	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.VibratoSweep); err != nil {
 		return nil, err
+	}
+	if sz++; sz >= ih.Size {
+		return &ih, nil
 	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.VibratoDepth); err != nil {
 		return nil, err
 	}
+	if sz++; sz >= ih.Size {
+		return &ih, nil
+	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.VibratoRate); err != nil {
 		return nil, err
+	}
+	if sz++; sz >= ih.Size {
+		return &ih, nil
 	}
 
 	if err := binary.Read(r, binary.LittleEndian, &ih.VolumeFadeout); err != nil {
 		return nil, err
 	}
+	if sz += 2; sz >= ih.Size {
+		return &ih, nil
+	}
 
-	if err := binary.Read(r, binary.LittleEndian, &ih.ReservedP241); err != nil {
-		return nil, err
+	for i := range ih.ReservedP241 {
+		if err := binary.Read(r, binary.LittleEndian, &ih.ReservedP241[i]); err != nil {
+			return nil, err
+		}
+		if sz += 2; sz >= ih.Size {
+			return &ih, nil
+		}
 	}
 
 	return &ih, nil
@@ -307,14 +387,14 @@ func readInstrumentHeader(r io.Reader) (*InstrumentHeader, error) {
 		}
 
 		// convert the sample in the background
-		go func() {
+		go func(data []int8) {
 			old := int8(0)
 			for i, s := range data {
 				new := s + old
 				data[i] = new
 				old = new
 			}
-		}()
+		}(data)
 	}
 	return ih, nil
 }

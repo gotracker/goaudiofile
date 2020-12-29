@@ -62,10 +62,106 @@ func (f HeaderFlags) IsExtendedFilterRange() bool {
 	return (f & HeaderFlagExtendedFilterRange) != 0
 }
 
-func readHeader(r io.Reader) (*ModuleHeader, error) {
+func readHeaderPartial(r io.Reader) (*ModuleHeader, error) {
 	xmh := ModuleHeader{}
 
-	if err := binary.Read(r, binary.LittleEndian, &xmh); err != nil {
+	if err := binary.Read(r, binary.LittleEndian, &xmh.IDText); err != nil {
+		return nil, err
+	}
+
+	if err := binary.Read(r, binary.LittleEndian, &xmh.Name); err != nil {
+		return nil, err
+	}
+
+	if err := binary.Read(r, binary.LittleEndian, &xmh.Reserved1A); err != nil {
+		return nil, err
+	}
+
+	if err := binary.Read(r, binary.LittleEndian, &xmh.TrackerName); err != nil {
+		return nil, err
+	}
+
+	if err := binary.Read(r, binary.LittleEndian, &xmh.VersionNumber); err != nil {
+		return nil, err
+	}
+
+	sz := uint32(0)
+	if err := binary.Read(r, binary.LittleEndian, &xmh.HeaderSize); err != nil {
+		return nil, err
+	}
+	sz += 4
+
+	if err := binary.Read(r, binary.LittleEndian, &xmh.SongLength); err != nil {
+		return nil, err
+	}
+	if sz += 2; sz >= xmh.HeaderSize {
+		return &xmh, nil
+	}
+
+	if err := binary.Read(r, binary.LittleEndian, &xmh.RestartPosition); err != nil {
+		return nil, err
+	}
+	if sz += 2; sz >= xmh.HeaderSize {
+		return &xmh, nil
+	}
+
+	if err := binary.Read(r, binary.LittleEndian, &xmh.NumChannels); err != nil {
+		return nil, err
+	}
+	if sz += 2; sz >= xmh.HeaderSize {
+		return &xmh, nil
+	}
+
+	if err := binary.Read(r, binary.LittleEndian, &xmh.NumPatterns); err != nil {
+		return nil, err
+	}
+	if sz += 2; sz >= xmh.HeaderSize {
+		return &xmh, nil
+	}
+
+	if err := binary.Read(r, binary.LittleEndian, &xmh.NumInstruments); err != nil {
+		return nil, err
+	}
+	if sz += 2; sz >= xmh.HeaderSize {
+		return &xmh, nil
+	}
+
+	if err := binary.Read(r, binary.LittleEndian, &xmh.Flags); err != nil {
+		return nil, err
+	}
+	if sz += 2; sz >= xmh.HeaderSize {
+		return &xmh, nil
+	}
+
+	if err := binary.Read(r, binary.LittleEndian, &xmh.DefaultSpeed); err != nil {
+		return nil, err
+	}
+	if sz += 2; sz >= xmh.HeaderSize {
+		return &xmh, nil
+	}
+
+	if err := binary.Read(r, binary.LittleEndian, &xmh.DefaultTempo); err != nil {
+		return nil, err
+	}
+	if sz += 2; sz >= xmh.HeaderSize {
+		return &xmh, nil
+	}
+
+	for i := range xmh.OrderTable {
+		if err := binary.Read(r, binary.LittleEndian, &xmh.OrderTable[i]); err != nil {
+			return nil, err
+		}
+		if sz++; sz >= xmh.HeaderSize {
+			return &xmh, nil
+		}
+	}
+
+	return &xmh, nil
+}
+
+func readHeader(r io.Reader) (*ModuleHeader, error) {
+	xmh, err := readHeaderPartial(r)
+	if err != nil {
 		return nil, err
 	}
 
@@ -81,5 +177,5 @@ func readHeader(r io.Reader) (*ModuleHeader, error) {
 		return nil, errors.New("invalid number of instruments - possibly corrupt file")
 	}
 
-	return &xmh, nil
+	return xmh, nil
 }

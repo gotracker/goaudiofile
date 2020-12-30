@@ -2,6 +2,7 @@ package xm
 
 import (
 	"encoding/binary"
+	"errors"
 	"io"
 
 	"github.com/gotracker/goaudiofile/internal/util"
@@ -335,7 +336,7 @@ func readInstrumentHeader(r io.Reader) (*InstrumentHeader, error) {
 	}
 
 	if ih.Size < 29 {
-		panic("what")
+		return nil, errors.New("unusually small instrument header size - possibly corrupt file")
 	}
 
 	for i := uint16(0); i < ih.SamplesCount; i++ {

@@ -392,14 +392,30 @@ func readInstrumentHeader(r io.Reader) (*InstrumentHeader, error) {
 		}
 
 		// convert the sample in the background
-		go func(data []uint8) {
-			old := int8(0)
-			for i, s := range data {
-				new := int8(s) + old
-				data[i] = uint8(new)
-				old = new
-			}
-		}(s.SampleData)
+		if (s.Flags & SampleFlag16Bit) != 0 {
+			go convertSample16Bit(s.SampleData)
+		} else {
+			go convertSample8Bit(s.SampleData)
+		}
 	}
 	return ih, nil
+}
+
+func convertSample8Bit(data []uint8) {
+	old := int8(0)
+	for i, s := range data {
+		new := int8(s) + old
+		data[i] = uint8(new)
+		old = new
+	}
+}
+
+func convertSample16Bit(data []uint8) {
+	old := int16(0)
+	for i := 0; i < len(data); i += 2 {
+		s := binary.LittleEndian.Uint16(data[i:])
+		new := int16(s) + old
+		binary.LittleEndian.PutUint16(data[i:], uint16(new))
+		old = new
+	}
 }

@@ -9,6 +9,11 @@ import (
 	"github.com/gotracker/goaudiofile/internal/util"
 )
 
+var (
+	// ErrInvalidFileFormat is for when an invalid file format is encountered
+	ErrInvalidFileFormat = errors.New("invalid file format")
+)
+
 // File is an IT internal file representation
 type File struct {
 	Head               ModuleHeader
@@ -16,6 +21,7 @@ type File struct {
 	InstrumentPointers []ParaPointer32
 	SamplePointers     []ParaPointer32
 	PatternPointers    []ParaPointer32
+	Instruments        []IMPIIntf
 }
 
 // Read reads an IT file from the reader `r` and creates an internal File representation
@@ -24,14 +30,14 @@ func Read(r io.Reader) (*File, error) {
 	if _, err := buffer.ReadFrom(r); err != nil {
 		return nil, err
 	}
-	//data := buffer.Bytes()
+	data := buffer.Bytes()
 
 	fh, err := ReadModuleHeader(buffer)
 	if err != nil {
 		return nil, err
 	}
 	if util.GetString(fh.IMPM[:]) != "IMPM" {
-		return nil, errors.New("invalid file format")
+		return nil, ErrInvalidFileFormat
 	}
 
 	f := File{
@@ -53,8 +59,22 @@ func Read(r io.Reader) (*File, error) {
 	if err := binary.Read(buffer, binary.LittleEndian, &f.PatternPointers); err != nil {
 		return nil, err
 	}
+	// the earliest valid position to read from
+	valPos := ParaPointer32(0x00C0 + len(f.OrderList) + len(f.InstrumentPointers)*4 + len(f.SamplePointers)*4 + len(f.PatternPointers)*4)
 
-	// TODO: read instruments/samples
+	for _, ptr := range f.InstrumentPointers {
+		if ptr < valPos {
+			return nil, ErrInvalidFileFormat
+		}
+
+		impi, err := readIMPI(data, ptr, f.Head.TrackerCompatVersion)
+		if err != nil {
+			return nil, ErrInvalidFileFormat
+		}
+		f.Instruments = append(f.Instruments, impi)
+	}
+
+	// TODO: read samples
 
 	// TODO: read patterns
 

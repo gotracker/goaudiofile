@@ -23,6 +23,7 @@ type File struct {
 	PatternPointers    []ParaPointer32
 	Instruments        []IMPIIntf
 	Samples            []FullSample
+	Patterns           []PackedPattern
 }
 
 // FullSample is a full sample, header + data
@@ -55,6 +56,7 @@ func Read(r io.Reader) (*File, error) {
 		PatternPointers:    make([]ParaPointer32, int(fh.PatternCount)),
 		Instruments:        make([]IMPIIntf, 0),
 		Samples:            make([]FullSample, 0),
+		Patterns:           make([]PackedPattern, 0),
 	}
 	if err := binary.Read(buffer, binary.LittleEndian, &f.OrderList); err != nil {
 		return nil, err
@@ -116,7 +118,17 @@ func Read(r io.Reader) (*File, error) {
 		f.Samples = append(f.Samples, fs)
 	}
 
-	// TODO: read patterns
+	for _, ptr := range f.PatternPointers {
+		if ptr < valPos {
+			return nil, ErrInvalidFileFormat
+		}
+
+		pat, err := readPackedPattern(data, ptr, f.Head.TrackerCompatVersion)
+		if err != nil {
+			return nil, ErrInvalidFileFormat
+		}
+		f.Patterns = append(f.Patterns, *pat)
+	}
 
 	return &f, nil
 }

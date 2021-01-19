@@ -75,6 +75,34 @@ func (p PanValue) Value() float32 {
 	}
 }
 
+// SamplePanValue describes a panning value in the IT format's sample header
+type SamplePanValue uint8
+
+// IsSurround returns true if the panning is in surround-sound mode
+func (p SamplePanValue) IsSurround() bool {
+	return (p &^ 128) == 100
+}
+
+// IsDisabled returns true if the channel this panning value is attached to is muted
+// Effects in muted channels are still processed
+func (p SamplePanValue) IsDisabled() bool {
+	return (p & 128) == 0
+}
+
+// Value returns the value of the panning as a floating point value between 0 and 1, inclusively
+// 0 = absolute left, 0.5 = center, 1 = absolute right
+func (p SamplePanValue) Value() float32 {
+	pv := p &^ 128
+	switch {
+	case pv >= 0 && pv <= 64:
+		return float32(pv) / 64
+	case pv == 100:
+		return float32(0.5)
+	default:
+		panic("unexpected value")
+	}
+}
+
 // NewNoteAction is what to do when a new note occurs
 type NewNoteAction uint8
 
@@ -147,14 +175,35 @@ type Envelope struct {
 	Reserved51       uint8
 }
 
-// EnvelopeFlags is the flagset for new instrument envelopes
-type EnvelopeFlags uint8
+// DuplicateNoteCheck activates or deactivates the duplicate note checking
+type DuplicateNoteCheck uint8
 
 const (
-	// EnvelopeFlagEnvelopeOn :: On = Use envelope
-	EnvelopeFlagEnvelopeOn = EnvelopeFlags(1 << 0)
-	// EnvelopeFlagLoopOn :: On = Use loop
-	EnvelopeFlagLoopOn = EnvelopeFlags(1 << 1)
-	// EnvelopeFlagSustainLoopOn :: On = Use sustain loop
-	EnvelopeFlagSustainLoopOn = EnvelopeFlags(1 << 2)
+	// DuplicateNoteCheckOff disables the duplicate note checking
+	DuplicateNoteCheckOff = DuplicateNoteCheck(0)
+	// DuplicateNoteCheckOn activates the duplicate note checking
+	DuplicateNoteCheckOn = DuplicateNoteCheck(1)
 )
+
+// Note is a note field value
+type Note uint8
+
+// IsNoteOff returns true if the note is a note-off command
+func (n Note) IsNoteOff() bool {
+	return n == 255
+}
+
+// IsNoteCut returns true if the note is a note-cut command
+func (n Note) IsNoteCut() bool {
+	return n == 254
+}
+
+// IsNoteFade returns true if the note is a note-fade command
+func (n Note) IsNoteFade() bool {
+	return n >= 120 && n < 254
+}
+
+// IsSpecial returns true if the note is actually a special value (see above)
+func (n Note) IsSpecial() bool {
+	return n >= 120
+}

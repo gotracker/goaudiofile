@@ -22,6 +22,13 @@ type File struct {
 	SamplePointers     []ParaPointer32
 	PatternPointers    []ParaPointer32
 	Instruments        []IMPIIntf
+	Samples            []FullSample
+}
+
+// FullSample is a full sample, header + data
+type FullSample struct {
+	Header Sample
+	Data   []byte
 }
 
 // Read reads an IT file from the reader `r` and creates an internal File representation
@@ -46,6 +53,8 @@ func Read(r io.Reader) (*File, error) {
 		InstrumentPointers: make([]ParaPointer32, int(fh.InstrumentCount)),
 		SamplePointers:     make([]ParaPointer32, int(fh.SampleCount)),
 		PatternPointers:    make([]ParaPointer32, int(fh.PatternCount)),
+		Instruments:        make([]IMPIIntf, 0),
+		Samples:            make([]FullSample, 0),
 	}
 	if err := binary.Read(buffer, binary.LittleEndian, &f.OrderList); err != nil {
 		return nil, err
@@ -74,7 +83,38 @@ func Read(r io.Reader) (*File, error) {
 		f.Instruments = append(f.Instruments, impi)
 	}
 
-	// TODO: read samples
+	for _, ptr := range f.SamplePointers {
+		if ptr < valPos {
+			return nil, ErrInvalidFileFormat
+		}
+
+		imps, err := readIMPS(data, ptr, f.Head.TrackerCompatVersion)
+		if err != nil {
+			return nil, ErrInvalidFileFormat
+		}
+
+		fs := FullSample{
+			Header: *imps,
+			Data:   make([]byte, 0),
+		}
+
+		if fs.Header.Flags.DoesSampleExist() {
+			slen := fs.Header.Length
+			if fs.Header.Flags.Is16Bit() {
+				slen *= 2
+			}
+			if fs.Header.Flags.IsStereo() {
+				slen *= 2
+			}
+
+			fs.Data = make([]byte, slen)
+			if err := readSampleData(data, fs.Header.SamplePointer, f.Head.TrackerCompatVersion, fs.Data); err != nil {
+				return nil, err
+			}
+		}
+
+		f.Samples = append(f.Samples, fs)
+	}
 
 	// TODO: read patterns
 

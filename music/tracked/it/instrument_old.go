@@ -1,5 +1,7 @@
 package it
 
+import "github.com/gotracker/goaudiofile/internal/util"
+
 // IMPIInstrumentOld is the format of the IMPI Instrument for tracker compatibility versions < 0x0200
 type IMPIInstrumentOld struct {
 	IMPI               [4]byte
@@ -23,24 +25,12 @@ type IMPIInstrumentOld struct {
 	NodePoints         [25]NodePoint16
 }
 
-// IMPIOldFlags is the flagset for IMPIInstrumentOld instruments
-type IMPIOldFlags uint8
+// GetName returns a string representation of the data stored in the Name field
+func (i *IMPIInstrumentOld) GetName() string {
+	return util.GetString(i.Name[:])
+}
 
-const (
-	// IMPIOldFlagUseVolumeEnvelope :: On = Use volume envelope
-	IMPIOldFlagUseVolumeEnvelope = IMPIOldFlags(1 << 0)
-	// IMPIOldFlagUseVolumeLoop :: On = Use volume loop
-	IMPIOldFlagUseVolumeLoop = IMPIOldFlags(1 << 1)
-	// IMPIOldFlagUseSustainVolumeLoop :: On = Use sustain volume loop
-	IMPIOldFlagUseSustainVolumeLoop = IMPIOldFlags(1 << 2)
-)
-
-// DuplicateNoteCheck activates or deactivates the duplicate note checking
-type DuplicateNoteCheck uint8
-
-const (
-	// DuplicateNoteCheckOff disables the duplicate note checking
-	DuplicateNoteCheckOff = DuplicateNoteCheck(0)
-	// DuplicateNoteCheckOn activates the duplicate note checking
-	DuplicateNoteCheckOn = DuplicateNoteCheck(1)
-)
+// GetFilename returns a string representation of the data stored in the Filename field
+func (i *IMPIInstrumentOld) GetFilename() string {
+	return util.GetString(i.Filename[:])
+}

@@ -1,5 +1,7 @@
 package it
 
+import "github.com/gotracker/goaudiofile/internal/util"
+
 // IMPIInstrument is the format of the IMPI Instrument for tracker compatibility versions >= 0x0200
 type IMPIInstrument struct {
 	IMPI                   [4]byte
@@ -28,4 +30,14 @@ type IMPIInstrument struct {
 	VolumeEnvelope         Envelope
 	PanningEnvelope        Envelope
 	PitchEnvelope          Envelope
+}
+
+// GetName returns a string representation of the data stored in the Name field
+func (i *IMPIInstrument) GetName() string {
+	return util.GetString(i.Name[:])
+}
+
+// GetFilename returns a string representation of the data stored in the Filename field
+func (i *IMPIInstrument) GetFilename() string {
+	return util.GetString(i.Filename[:])
 }

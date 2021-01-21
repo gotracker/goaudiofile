@@ -16,12 +16,13 @@ type PackedPattern struct {
 
 // ChannelData is the partially decoded channel data from the packed pattern
 type ChannelData struct {
-	Flags       ChannelDataFlags
-	Note        Note
-	Instrument  uint8
-	VolPan      uint8
-	Command     uint8
-	CommandData uint8
+	ChannelNumber int8
+	Flags         ChannelDataFlags
+	Note          Note
+	Instrument    uint8
+	VolPan        uint8
+	Command       uint8
+	CommandData   uint8
 }
 
 func readPackedPattern(data []byte, ptr ParaPointer, cmwt uint16) (*PackedPattern, error) {
@@ -50,7 +51,7 @@ func readPackedPattern(data []byte, ptr ParaPointer, cmwt uint16) (*PackedPatter
 	}
 
 	p.Data = make([]uint8, int(p.Length))
-	if err := binary.Read(r, binary.LittleEndian, &p.Data); err != nil {
+	if _, err := r.Read(p.Data); err != nil {
 		return nil, err
 	}
 
@@ -61,7 +62,7 @@ func readPackedPattern(data []byte, ptr ParaPointer, cmwt uint16) (*PackedPatter
 // integer equal to the number of bytes used to decode the channel data, a ChannelData structure,
 // and a possible error value.
 // If there is no error and the row is completed, the ChannelData structure returned will be nil.
-func (p *PackedPattern) ReadChannelData(pos int) (int, *ChannelData, error) {
+func (p *PackedPattern) ReadChannelData(pos int, rowMem []ChannelData) (int, *ChannelData, error) {
 	if pos > len(p.Data) {
 		return 0, nil, errors.New("position out of bounds")
 	}
@@ -69,42 +70,83 @@ func (p *PackedPattern) ReadChannelData(pos int) (int, *ChannelData, error) {
 	var cd ChannelData
 
 	r := bytes.NewBuffer(p.Data[pos:])
+	if r.Len() == 0 {
+		return 0, nil, nil
+	}
+
 	s := 0
-	if err := binary.Read(r, binary.LittleEndian, &cd.Flags); err != nil {
+	var c uint8
+	if err := binary.Read(r, binary.LittleEndian, &c); err != nil {
 		return 0, nil, err
 	}
 	s++
 
+	if c == 0 {
+		return s, nil, nil
+	}
+
+	cd.ChannelNumber = (int8(c&^0x80) - 1) & 63
+
+	mem := &rowMem[int(cd.ChannelNumber)]
+
+	if (c & 0x80) != 0 {
+		if err := binary.Read(r, binary.LittleEndian, &cd.Flags); err != nil {
+			return s, nil, err
+		}
+		mem.Flags = cd.Flags
+		s++
+	} else {
+		cd.Flags = mem.Flags
+	}
+
 	if cd.Flags.HasNote() {
 		if err := binary.Read(r, binary.LittleEndian, &cd.Note); err != nil {
-			return 0, nil, err
+			return s, nil, err
 		}
+		mem.Note = cd.Note
 		s++
+	} else if cd.Flags.IsUseLastNote() {
+		cd.Note = mem.Note
+		cd.Flags |= ChannelDataFlagNote
 	}
 
 	if cd.Flags.HasInstrument() {
 		if err := binary.Read(r, binary.LittleEndian, &cd.Instrument); err != nil {
-			return 0, nil, err
+			return s, nil, err
 		}
+		mem.Instrument = cd.Instrument
 		s++
+	} else if cd.Flags.IsUseLastInstrument() {
+		cd.Instrument = mem.Instrument
+		cd.Flags |= ChannelDataFlagInstrument
 	}
 
 	if cd.Flags.HasVolPan() {
 		if err := binary.Read(r, binary.LittleEndian, &cd.VolPan); err != nil {
-			return 0, nil, err
+			return s, nil, err
 		}
+		mem.VolPan = cd.VolPan
 		s++
+	} else if cd.Flags.IsUseLastVolPan() {
+		cd.VolPan = mem.VolPan
+		cd.Flags |= ChannelDataFlagVolPan
 	}
 
 	if cd.Flags.HasCommand() {
 		if err := binary.Read(r, binary.LittleEndian, &cd.Command); err != nil {
-			return 0, nil, err
+			return s, nil, err
 		}
+		mem.Command = cd.Command
 		s++
 		if err := binary.Read(r, binary.LittleEndian, &cd.CommandData); err != nil {
-			return 0, nil, err
+			return s, nil, err
 		}
+		mem.CommandData = cd.CommandData
 		s++
+	} else if cd.Flags.IsUseLastCommand() {
+		cd.Command = mem.Command
+		cd.CommandData = mem.CommandData
+		cd.Flags |= ChannelDataFlagCommand
 	}
 
 	return s, &cd, nil

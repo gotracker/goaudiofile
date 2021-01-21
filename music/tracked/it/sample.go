@@ -57,7 +57,7 @@ func readSampleData(data []byte, ptr ParaPointer, cmwt uint16, out []byte) error
 	ofs := ptr.Offset()
 	r := bytes.NewBuffer(data[ofs:])
 
-	if err := binary.Read(r, binary.LittleEndian, out); err != nil {
+	if _, err := r.Read(out); err != nil {
 		return err
 	}
 

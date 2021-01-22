@@ -207,3 +207,9 @@ func (n Note) IsNoteFade() bool {
 func (n Note) IsSpecial() bool {
 	return n >= 120
 }
+
+// NoteSample is a note-sample keyboard mapping entry
+type NoteSample struct {
+	Note   Note
+	Sample uint8
+}

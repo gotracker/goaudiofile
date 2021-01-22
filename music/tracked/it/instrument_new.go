@@ -26,7 +26,7 @@ type IMPIInstrument struct {
 	MidiChannel            uint8
 	MidiProgram            uint8
 	MidiBank               uint16
-	NoteSampleKeyboard     [240]uint8
+	NoteSampleKeyboard     [120]NoteSample
 	VolumeEnvelope         Envelope
 	PanningEnvelope        Envelope
 	PitchEnvelope          Envelope

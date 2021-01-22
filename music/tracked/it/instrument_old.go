@@ -20,7 +20,7 @@ type IMPIInstrumentOld struct {
 	Reserved1F         uint8
 	Name               [26]byte
 	Reserved3A         [6]uint8
-	NoteSampleKeyboard [240]uint8
+	NoteSampleKeyboard [120]NoteSample
 	VolumeEnvelope     [200]uint8
 	NodePoints         [25]NodePoint16
 }

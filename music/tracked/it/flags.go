@@ -68,10 +68,10 @@ type IMPMSpecialFlags uint16
 const (
 	// IMPMSpecialFlagMessageAttached :: On = song message attached
 	IMPMSpecialFlagMessageAttached = IMPMSpecialFlags(1 << 0)
-	// IMPMSpecialFlagReservedBit1 :: Reserved
-	IMPMSpecialFlagReservedBit1 = IMPMSpecialFlags(1 << 1)
-	// IMPMSpecialFlagReservedBit2 :: Reserved
-	IMPMSpecialFlagReservedBit2 = IMPMSpecialFlags(1 << 2)
+	// IMPMSpecialFlagHistoryIncluded :: On = history data included (maybe)
+	IMPMSpecialFlagHistoryIncluded = IMPMSpecialFlags(1 << 1)
+	// IMPMSpecialFlagHighlightDataIncluded :: On = highlight data included
+	IMPMSpecialFlagHighlightDataIncluded = IMPMSpecialFlags(1 << 2)
 	// IMPMSpecialFlagEmbedMidi :: MIDI configuration embedded
 	IMPMSpecialFlagEmbedMidi = IMPMSpecialFlags(1 << 3)
 	// IMPMSpecialFlagReservedBit4 :: Reserved
@@ -103,6 +103,16 @@ const (
 // IsMessageAttached returns true if there is a special message attached to the file
 func (sf IMPMSpecialFlags) IsMessageAttached() bool {
 	return (sf & IMPMSpecialFlagMessageAttached) != 0
+}
+
+// IsHistoryIncluded returns true if there is a history block following the pattern parapointres in the file
+func (sf IMPMSpecialFlags) IsHistoryIncluded() bool {
+	return (sf & IMPMSpecialFlagHistoryIncluded) != 0
+}
+
+// IsHighlightDataIncluded returns true if there is a highlight data attached to the file
+func (sf IMPMSpecialFlags) IsHighlightDataIncluded() bool {
+	return (sf & IMPMSpecialFlagHighlightDataIncluded) != 0
 }
 
 // IsEmbedMidi returns true if embedded midi configuration is enabled

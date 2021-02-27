@@ -6,7 +6,7 @@ type Volume uint8
 // Value returns the value of the volume as a floating point value between 0 and 1, inclusively
 func (p Volume) Value() float32 {
 	switch {
-	case p >= 0 && p <= 64:
+	case p <= 64:
 		return float32(p) / 64
 	default:
 		panic("unexpected value")
@@ -19,7 +19,7 @@ type FineVolume uint8
 // Value returns the value of the fine volume as a floating point value between 0 and 1, inclusively
 func (p FineVolume) Value() float32 {
 	switch {
-	case p >= 0 && p <= 128:
+	case p <= 128:
 		return float32(p) / 128
 	default:
 		panic("unexpected value")
@@ -40,7 +40,7 @@ type PanSeparation uint8
 // Value returns the value of the panning separation as a floating point value between 0 and 1, inclusively
 func (p PanSeparation) Value() float32 {
 	switch {
-	case p >= 0 && p <= 128:
+	case p <= 128:
 		return float32(p) / 128
 	default:
 		panic("unexpected value")
@@ -66,7 +66,7 @@ func (p PanValue) IsDisabled() bool {
 func (p PanValue) Value() float32 {
 	pv := p &^ 128
 	switch {
-	case pv >= 0 && pv <= 64:
+	case pv <= 64:
 		return float32(pv) / 64
 	case pv == 100:
 		return float32(0.5)
@@ -94,7 +94,7 @@ func (p SamplePanValue) IsDisabled() bool {
 func (p SamplePanValue) Value() float32 {
 	pv := p &^ 128
 	switch {
-	case pv >= 0 && pv <= 64:
+	case pv <= 64:
 		return float32(pv) / 64
 	case pv == 100:
 		return float32(0.5)

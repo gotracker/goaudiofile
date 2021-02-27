@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/gotracker/goaudiofile/internal/util"
+	"github.com/gotracker/goaudiofile/music/tracked/it/block"
 )
 
 var (
@@ -24,6 +25,7 @@ type File struct {
 	Instruments        []IMPIIntf
 	Samples            []FullSample
 	Patterns           []PackedPattern
+	Blocks             []block.Block
 }
 
 // FullSample is a full sample, header + data
@@ -57,6 +59,7 @@ func Read(r io.Reader) (*File, error) {
 		Instruments:        make([]IMPIIntf, 0),
 		Samples:            make([]FullSample, 0),
 		Patterns:           make([]PackedPattern, 0),
+		Blocks:             make([]block.Block, 0),
 	}
 	if err := binary.Read(buffer, binary.LittleEndian, &f.OrderList); err != nil {
 		return nil, err
@@ -70,8 +73,41 @@ func Read(r io.Reader) (*File, error) {
 	if err := binary.Read(buffer, binary.LittleEndian, &f.PatternPointers); err != nil {
 		return nil, err
 	}
+
 	// the earliest valid position to read from
-	valPos := ParaPointer32(0x00C0 + len(f.OrderList) + len(f.InstrumentPointers)*4 + len(f.SamplePointers)*4 + len(f.PatternPointers)*4)
+	valPos := ParaPointer32(len(data))
+	if f.Head.SpecialFlags.IsMessageAttached() {
+		valPos = ParaPointer32(0x00C0 + len(f.OrderList) + len(f.InstrumentPointers)*4 + len(f.SamplePointers)*4 + len(f.PatternPointers)*4)
+	}
+
+	if f.Head.SpecialFlags.IsHistoryIncluded() {
+		var historyParaLen uint16
+		if err := binary.Read(buffer, binary.LittleEndian, &historyParaLen); err != nil {
+			return nil, err
+		}
+
+		hist := int(historyParaLen)*8 + valPos.Offset() + 2
+		if hist >= valPos.Offset() && hist < len(data) {
+			// TODO: read history values
+			valPos += ParaPointer32(historyParaLen)*8 + 2
+		}
+	}
+
+	nextValPos := valPos
+blockReadLoop:
+	for {
+		block, err := readBlock(data, nextValPos, f.Head.TrackerCompatVersion)
+		if err != nil || block == nil {
+			break blockReadLoop
+		}
+
+		f.Blocks = append(f.Blocks, block)
+		nextValPos += ParaPointer32(block.Length())
+
+		if nextValPos.Offset() < len(data) {
+			valPos = nextValPos
+		}
+	}
 
 	for _, ptr := range f.InstrumentPointers {
 		if ptr < valPos {

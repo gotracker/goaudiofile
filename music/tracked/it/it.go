@@ -98,8 +98,17 @@ blockReadLoop:
 			break blockReadLoop
 		}
 
+		blen := block.Length()
+		if blen < 8 {
+			break blockReadLoop
+		}
+
+		if block.FourCC() == 0x494d5049 { // IMPI
+			break blockReadLoop
+		}
+
 		f.Blocks = append(f.Blocks, block)
-		nextValPos += ParaPointer32(block.Length())
+		nextValPos += ParaPointer32(blen)
 
 		if nextValPos.Offset() < len(data) {
 			valPos = nextValPos

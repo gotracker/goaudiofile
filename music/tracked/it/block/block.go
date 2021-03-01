@@ -2,6 +2,8 @@ package block
 
 import (
 	"encoding/binary"
+
+	"github.com/gotracker/goaudiofile/internal/util"
 )
 
 // Block is a block interface
@@ -10,14 +12,25 @@ type Block interface {
 	Length() int // total length, including the magic identifier
 }
 
+// BlockIdent is a block identifier/FourCC value
+type BlockIdent [4]byte
+
+func (b BlockIdent) String() string {
+	return util.GetString(b[:])
+}
+
+func (b BlockIdent) FourCC() uint32 {
+	return binary.BigEndian.Uint32(b[:])
+}
+
 type blockBase struct {
-	Identifier [4]byte
+	Identifier BlockIdent
 	BlockLen   uint32
 }
 
 // FourCC returns the big-endian representation of the block identifier
 func (b *blockBase) FourCC() uint32 {
-	return binary.BigEndian.Uint32(b.Identifier[:])
+	return b.Identifier.FourCC()
 }
 
 // Length returns the size of the whole block

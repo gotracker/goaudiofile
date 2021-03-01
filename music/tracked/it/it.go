@@ -75,10 +75,7 @@ func Read(r io.Reader) (*File, error) {
 	}
 
 	// the earliest valid position to read from
-	valPos := ParaPointer32(len(data))
-	if f.Head.SpecialFlags.IsMessageAttached() {
-		valPos = ParaPointer32(0x00C0 + len(f.OrderList) + len(f.InstrumentPointers)*4 + len(f.SamplePointers)*4 + len(f.PatternPointers)*4)
-	}
+	valPos := ParaPointer32(0x00C0 + len(f.OrderList) + len(f.InstrumentPointers)*4 + len(f.SamplePointers)*4 + len(f.PatternPointers)*4)
 
 	if f.Head.SpecialFlags.IsHistoryIncluded() {
 		var historyParaLen uint16

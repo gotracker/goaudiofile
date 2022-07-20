@@ -44,7 +44,7 @@ func (f IMPMFlags) IsLinearSlides() bool {
 
 // IsOldEffects returns true if old-style effects are enabled
 func (f IMPMFlags) IsOldEffects() bool {
-	return (f & IMPMFlagLinearSlides) != 0
+	return (f & IMPMFlagOldEffects) != 0
 }
 
 // IsEFGLinking returns true if effect E/F/G linking is enabled

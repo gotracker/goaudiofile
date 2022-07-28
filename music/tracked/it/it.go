@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"io/ioutil"
 
 	"github.com/gotracker/goaudiofile/internal/util"
 	"github.com/gotracker/goaudiofile/music/tracked/it/block"
@@ -25,6 +26,7 @@ type File struct {
 	Instruments        []IMPIIntf
 	Samples            []FullSample
 	Patterns           []PackedPattern
+	EditHistory        []EditHistory
 	Blocks             []block.Block
 }
 
@@ -36,11 +38,12 @@ type FullSample struct {
 
 // Read reads an IT file from the reader `r` and creates an internal File representation
 func Read(r io.Reader) (*File, error) {
-	buffer := &bytes.Buffer{}
-	if _, err := buffer.ReadFrom(r); err != nil {
+	data, err := ioutil.ReadAll(r)
+	if err != nil {
 		return nil, err
 	}
-	data := buffer.Bytes()
+
+	buffer := bytes.NewReader(data)
 
 	fh, err := ReadModuleHeader(buffer)
 	if err != nil {
@@ -75,18 +78,46 @@ func Read(r io.Reader) (*File, error) {
 	}
 
 	// the earliest valid position to read from
-	valPos := ParaPointer32(0x00C0 + len(f.OrderList) + len(f.InstrumentPointers)*4 + len(f.SamplePointers)*4 + len(f.PatternPointers)*4)
+	valPos := ParaPointer32(len(data))
+
+	for _, pp := range f.InstrumentPointers {
+		if pp > 0 && pp < valPos {
+			valPos = pp
+		}
+	}
+	for _, pp := range f.SamplePointers {
+		if pp > 0 && pp < valPos {
+			valPos = pp
+		}
+	}
+	for _, pp := range f.PatternPointers {
+		if pp > 0 && pp < valPos {
+			valPos = pp
+		}
+	}
+
+	if f.Head.SpecialFlags.IsMessageAttached() {
+		if valPos > f.Head.MessageOffset {
+			valPos = f.Head.MessageOffset
+		}
+	}
 
 	if f.Head.SpecialFlags.IsHistoryIncluded() {
+		curPos, _ := buffer.Seek(0, io.SeekCurrent)
 		var historyParaLen uint16
 		if err := binary.Read(buffer, binary.LittleEndian, &historyParaLen); err != nil {
 			return nil, err
 		}
 
-		hist := int(historyParaLen)*8 + valPos.Offset() + 2
-		if hist >= valPos.Offset() && hist < len(data) {
-			// TODO: read history values
-			valPos += ParaPointer32(historyParaLen)*8 + 2
+		histBlockEnd := int(curPos) + int(historyParaLen)*8 + 2
+		if histBlockEnd < len(data) {
+			var h EditHistory
+			if err := binary.Read(buffer, binary.LittleEndian, &h); err != nil {
+				return nil, err
+			}
+			f.EditHistory = append(f.EditHistory, h)
+		} else {
+			buffer.Seek(curPos, io.SeekStart)
 		}
 	}
 
@@ -161,7 +192,9 @@ blockReadLoop:
 	}
 
 	for _, ptr := range f.PatternPointers {
-		if ptr < valPos {
+		if ptr == 0 {
+			f.Patterns = append(f.Patterns, PackedPattern{})
+		} else if ptr < valPos {
 			return nil, ErrInvalidFileFormat
 		}
 

@@ -20,6 +20,8 @@ const (
 	IMPMFlagMidiPitchController = IMPMFlags(1 << 6)
 	// IMPMFlagReqEmbedMidi :: Request embedded MIDI configuration
 	IMPMFlagReqEmbedMidi = IMPMFlags(1 << 7)
+	// IMPMFlagExtendedFilterRange :: Extended filter range for resonant filter, On = 12288Hz, Off = 10240Hz
+	IMPMFlagExtendedFilterRange = IMPMFlags(1 << 12)
 )
 
 // IsStereo returns true if stereo (panning) is enabled
@@ -60,6 +62,11 @@ func (f IMPMFlags) IsMidiPitchController() bool {
 // IsReqEmbedMidi returns true if request embedded midi configuration is enabled
 func (f IMPMFlags) IsReqEmbedMidi() bool {
 	return (f & IMPMFlagReqEmbedMidi) != 0
+}
+
+// IsReqEmbedMidi returns true if resonant filter extended filter range is enabled
+func (f IMPMFlags) IsExtendedFilterRange() bool {
+	return (f & IMPMFlagExtendedFilterRange) != 0
 }
 
 // IMPMSpecialFlags is a set of flags describing various special features in the IT file

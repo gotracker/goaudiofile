@@ -2,9 +2,8 @@ package s3m
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
-
-	"github.com/pkg/errors"
 
 	"github.com/gotracker/goaudiofile/internal/util"
 )
@@ -88,7 +87,7 @@ func ReadSCRS(r io.Reader) (*SCRS, error) {
 	case SCRSTypeOPL2Melody, SCRSTypeOPL2BassDrum, SCRSTypeOPL2Snare, SCRSTypeOPL2Tom, SCRSTypeOPL2Cymbal, SCRSTypeOPL2HiHat:
 		sh.Ancillary = &SCRSAdlibHeader{}
 	default:
-		return nil, errors.Errorf("unknown SCRS instrument type %0.2x", sh.Head.Type)
+		return nil, fmt.Errorf("unknown SCRS instrument type %0.2x", sh.Head.Type)
 	}
 
 	if sh.Ancillary != nil {
